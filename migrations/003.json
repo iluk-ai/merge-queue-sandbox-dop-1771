@@ -1,1 +1,6 @@
-{"id": "003", "parent": "001", "up": "ALTER TABLE sandbox_accounts ADD COLUMN active boolean;", "down": "ALTER TABLE sandbox_accounts DROP COLUMN active;"}
+{
+  "id": "003",
+  "parent": "002",
+  "up": "ALTER TABLE sandbox_accounts ADD COLUMN active boolean;",
+  "down": "ALTER TABLE sandbox_accounts DROP COLUMN active;"
+}
