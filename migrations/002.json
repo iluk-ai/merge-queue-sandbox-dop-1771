@@ -1,0 +1,1 @@
+{"id": "002", "parent": "001", "up": "ALTER TABLE sandbox_accounts ADD COLUMN label text;", "down": "ALTER TABLE sandbox_accounts DROP COLUMN label;"}
