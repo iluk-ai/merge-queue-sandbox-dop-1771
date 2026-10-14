@@ -1,0 +1,49 @@
+name: Isolated queue verification
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  merge_group:
+    types: [checks_requested]
+permissions:
+  contents: read
+concurrency:
+  group: sandbox-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  integration:
+    name: Sandbox integration
+    if: >-
+      github.repository == 'iluk-ai/merge-queue-sandbox-dop-1771'
+      && (github.event_name == 'merge_group'
+          || (github.event.pull_request.head.repo.full_name == github.repository
+              && github.event.pull_request.user.login == 'ali-iluk'))
+    runs-on: [dop-1771-isolated]
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: pgvector/pgvector@sha256:12a379b47ad65289572ea0756efc11b7c241a6662833e8af7038cd3b73d647e0
+        env:
+          POSTGRES_USER: sandbox
+          POSTGRES_PASSWORD: synthetic-sandbox-only
+          POSTGRES_DB: sandbox
+        options: >-
+          --health-cmd "pg_isready -U sandbox -d sandbox"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate application, migration history, and PostgreSQL round trip
+        run: python3 verify.py
+        env:
+          VERIFY_POSTGRES: 'true'
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sandbox-receipt-${{ github.run_id }}-${{ github.run_attempt }}
+          path: receipt.json
+          if-no-files-found: error
